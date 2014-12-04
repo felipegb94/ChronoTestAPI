@@ -45,7 +45,7 @@ def getTestJson(t):
             "name": "",
             "project_name": "Chrono", 
             "passed": False,
-            "runtime": 0, 
+            "runtime": {}, 
             "timestamp": "",
             "id": 0,
             }
