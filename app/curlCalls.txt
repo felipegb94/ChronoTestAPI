@@ -1,0 +1,53 @@
+curl calls
+
+curl -i http://localhost:5000/chrono_test/api/tests
+
+
+python migrate.py db migrate --> Record changes in models.py
+python migrate.py db upgrade --> Upgrade to new version of database
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"name":"newBenchmark"}' http://localhost:5000/chrono_test/api/tests
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"name":"newBenchmark","passed": "True"}' http://localhost:5000/chrono_test/api/tests
+
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"name":"newBenchmark","runtime": 12,"passed":"True","project_name":"Chrono"}' http://localhost:5000/chrono_test/api/tests
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"tests":[{"name":"newBenchmark","runtime": 12,"passed":"True","project_name":"Chrono"}]}' http://localhost:5000/chrono_test/api/tests
+
+
+    "tests": [
+        {
+            "test_runtime": 0.000872135,
+            "project_name": "Chrono",
+            "test_passed": true,
+            "test_name": "ChBody_Benchmark"
+        },
+        {
+            "test_runtime": 0.000872135,
+            "project_name": "Chrono",
+            "test_passed": true,
+            "test_name": "ChBody_Benchmark2"
+        }
+    ]
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"tests":[{"name":"newBenchmark100","runtime": 12,"passed":"True","project_name":"Chrono"},{"name":"newBenchmark1001","runtime":12,"passed":"True","project_name":"Chrono"},{"name":"newBenchmark10023","runtime":12,"passed":"True","project_name":"Chrono"},{"name":"newBenchmark100121","runtime": 12,"passed":"True","project_name":"Chrono"}]}' http://localhost:5000/chrono_test/api/tests
+
+
+        #Required Arguments for each test
+
+                self.testParser.add_argument('name', type = str, required = True,
+            help = 'No test name provided. Test name required to create a test', 
+            location = 'json')
+        
+        self.testParser.add_argument('passed', type = bool, required = True,
+            help = 'No test passed argument provided. Required to create a test', 
+            location = 'json')
+
+        self.testParser.add_argument('project_name', type = str, required = True,
+            help = 'No test project name  provided. Required to create a test',             
+            location = 'json')
+
+        self.testParser.add_argument('runtime', type = float, required = True,
+            help = 'No test runtime argument provided. Required to create a test',             
+            location = 'json') 
