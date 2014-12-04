@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #This script contains all the libraries installed in the virtual environment.
-
+flask/bin/pip install psycopg2
 flask/bin/pip install flask
 flask/bin/pip install flask-login
 flask/bin/pip install flask-openid
@@ -16,6 +16,7 @@ flask/bin/pip install flask-migrate
 flask/bin/pip install guess_language
 flask/bin/pip install flipflop
 flask/bin/pip install coverage
+
 
 flask/bin/pip install flask-restful
 flask/bin/pip install bson
