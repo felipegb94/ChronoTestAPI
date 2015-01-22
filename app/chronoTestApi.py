@@ -23,7 +23,8 @@ def get_password(username):
     return usr[0].passwordHash
 
 def Keys():
-    keys = ["name","runtime", "passed", "project_name"]
+    keys = ["name", "project_name", "metrics", "execution_time", "passed"]
+
     return keys
 
 #Validate that the input json file contains the required keys.
@@ -38,26 +39,6 @@ def validateTest(data):
 
     return True
 
-
-def getTestJson(t):
-
-    test = {
-            "name": "",
-            "project_name": "Chrono", 
-            "passed": False,
-            "runtime": {}, 
-            "timestamp": "",
-            "id": 0,
-            }
-
-    test["name"] = t.name
-    test["runtime"] = t.runtime
-    test["project_name"] = t.project_name
-    test["passed"] = t.passed
-    test["id"] = t.id
-    test["timestamp"] = t.timestamp
-
-    return test
 
 class TestListAPI(Resource):
     decorators = [auth.login_required]
@@ -90,14 +71,13 @@ class TestListAPI(Resource):
             
             validateTest(t)        
             newTest = models.Test(name = t.get("name"),
-                                project_name = t.get("project_name"),
-                                passed = t.get("passed"),
-                                runtime = t.get("runtime"))
+                                  project_name = t.get("project_name"),
+                                  passed = t.get("passed"),
+                                  execution_time = t.get("execution_time"),
+                                  metrics = t.get("metrics"))
             db.session.add(newTest)
             db.session.commit() 
             
-
-       
         numTests = models.Test.query.all()
 
         return {"numTests" : len(numTests)}, 201

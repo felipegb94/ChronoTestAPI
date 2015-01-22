@@ -10,13 +10,15 @@ class Test(db.Model):
 	timestamp = db.Column(db.DateTime, default=db.func.now())
 	name = db.Column(db.String(20), index=True)
 	project_name = db.Column(db.String(20), index=True)
-	runtime = db.Column(JSON, index=False)
+	execution_time = db.Column(db.Float, index = True)
+	metrics = db.Column(JSON, index=False)
 	passed = db.Column(db.Boolean, index=True)
 
-	def __init__(self, name, project_name, runtime, passed):
+	def __init__(self, name, project_name, execution_time, metrics, passed):
 		self.name = name
 		self.project_name = project_name
-		self.runtime = runtime
+		self.execution_time = execution_time		
+		self.metrics = metrics
 		self.passed = passed
 
 
@@ -24,7 +26,8 @@ class Test(db.Model):
 		test = {"name": self.name,
                 "project_name": self.project_name,  
                 "passed": self.passed,
-                "runtime": self.runtime, 
+                "execution_time": self.execution_time, 
+                "metrics": self.metrics,                 
                 "timestamp": str(self.timestamp),
                 "id": self.id}
 
