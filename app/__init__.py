@@ -3,11 +3,14 @@ from flask.ext.restful  import Api
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.script import Manager
 from flask.ext.migrate import Migrate, MigrateCommand
+from flask_hmac import Hmac
 
 
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
+hm = Hmac(app)
+
 
 api = Api(app)
 

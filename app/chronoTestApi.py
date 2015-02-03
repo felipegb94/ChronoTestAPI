@@ -1,26 +1,39 @@
-from flask import jsonify, make_response, abort, request
+from flask import jsonify, make_response, abort, request, g
 from flask.ext.restful import Resource, reqparse, fields, marshal
 from app import app, api
-from app import db, models
+from app import db, models, hm
 from flask.ext.httpauth import HTTPBasicAuth
 import json
 
 auth = HTTPBasicAuth()
 
-
+'''
 test_fields = {
     'name': fields.String,
     'passed': fields.Boolean,
-    'runtime': fields.Integer,
-    'project_name': fields.String,
+    'execution_time': fields.Float,
+    'project_name': fields.String
 }
+'''
 
-@auth.get_password
-def get_password(username):
-    usr = models.User.query.filter(models.User.username == username).all()
-    if not usr:
-        abort(401)
-    return usr[0].passwordHash
+@auth.verify_password
+def verify_password(username_or_token, password):
+    user = models.User.verify_auth_token(username_or_token)
+
+    if not user:
+        user = models.User.query.filter_by(username = username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
+
+    g.user = user
+
+    return True
+
+@app.route('/chrono_test/api/token')
+@auth.login_required
+def get_auth_token():
+    token = g.user.generate_auth_token()
+    return jsonify({ 'token': token.decode('ascii') })
 
 def Keys():
     keys = ["name", "project_name", "metrics", "execution_time", "passed"]
@@ -38,7 +51,6 @@ def validateTest(data):
             abort(400)
 
     return True
-
 
 class TestListAPI(Resource):
     decorators = [auth.login_required]
@@ -103,17 +115,16 @@ class TestAPI(Resource):
         super(TestAPI, self).__init__()
 
     def get(self, test_name):
-        output = { test_name: []}
 
         tests = models.Test.query.filter(models.Test.name == test_name).all()
 
         if len(tests) == 0:
             abort(404)
 
-           
         return json.loads(str(tests))
         
-    #Update Task
+    #Update Task: We don't want to be able to modify tests
+    '''
     def put(self, test_name):
 
         test = filter(lambda t: t['test_name'] == test_name, output['tests'])
@@ -129,11 +140,11 @@ class TestAPI(Resource):
             if v != None:
                 test[k] = v
         return { 'test': marshal(test, test_fields) }
-        
-
+    '''    
+'''
     def delete(self, test_name):
         pass
-
+'''
 api.add_resource(TestAPI, '/chrono_test/api/tests/<string:test_name>', endpoint = 'test')
 
 @auth.error_handler

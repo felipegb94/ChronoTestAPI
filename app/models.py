@@ -1,7 +1,9 @@
-from app import db
+from app import app, db
 import json
 from werkzeug import generate_password_hash, check_password_hash
 from sqlalchemy.dialects.postgresql import JSON, ARRAY
+from passlib.apps import custom_app_context as pwd_context
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 class Test(db.Model):
 
@@ -34,20 +36,36 @@ class Test(db.Model):
 		return json.dumps(test, indent = 4)
 
 class User(db.Model):
-	__tablename__ = "Users"
+	__tablename__ = 'Users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(50), index=True, unique = True)
 	passwordHash = db.Column(db.String(200), unique = True)
 
-	def __init__(self, username, password):
+	def __init__(self, username):
 		self.username = username
-		self.passwordHash = password
 
-	def set_password(self, password):
-		self.passwordHash = generate_password_hash(password)
+	def hash_password(self, pw):
+		self.passwordHash = pwd_context.encrypt(pw)
 
-	def check_password(self, password):
-		check_password_hash(self.passwordHash, password)
+	def verify_password(self, pw):
+		return pwd_context.verify(pw, self.passwordHash)
+
+	def generate_auth_token(self, expiration = 1000):
+		s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+		return s.dumps({'id': self.id})
+
+	@staticmethod
+	def verify_auth_token(token):
+		s = Serializer(app.config['SECRET_KEY'])
+		try:
+			data = s.loads(token)
+		except SignatureExpired:
+			return None
+		except BadSignature:
+			return None
+		user = User.query.get(data['id'])
+		return user
+
 
 	def __repr__(self):
 		return '<User %r>' % (self.username)
