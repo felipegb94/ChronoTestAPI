@@ -29,3 +29,5 @@ python migrate.py db init
 python migrate.py db migrate
 python migrate.py db upgrade
 ```
+
+Authentication in this API is a password based authentication. Your database will have a Users table and it should have a 
