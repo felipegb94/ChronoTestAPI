@@ -17,20 +17,23 @@ class Test(db.Model):
 	__tablename__ = "tests"
 	id = db.Column(db.Integer, primary_key = True)
 
-	name = db.Column(db.String(30), index = True, primary_key = True, unique = True)
+	name = db.Column(db.String(30), index = True, primary_key = True)
 	machine_name = db.Column(db.String(20), index = True)
+	test_run_name = db.Column(db.String(30), index = True, primary_key = True, unique = True)
 	project_name = db.Column(db.String(20), index = True)
 	runs = db.relationship('Test_Runs', backref = 'tests')
 
 
-	def __init__(self, name, project_name, machine_name):
+	def __init__(self, name, test_run_name, project_name, machine_name):
 		self.name = name
+		self.test_run_name = test_run_name
 		self.machine_name = machine_name
 		self.project_name = project_name
 
 	def __repr__(self):
 		test = {"name": self.name,
                 "machine_name": self.machine_name,  
+                "test_run_name": self.test_run_name,                 
                 "project_name": self.project_name,  
                 "id": self.id}
 
@@ -41,15 +44,19 @@ class Test_Runs(db.Model):
 	__tablename__ = "test_runs"
 
 	id = db.Column(db.Integer, primary_key = True)
-	test_name = db.Column(db.String(30), db.ForeignKey('tests.name'))
+	test_name = db.Column(db.String(30), index = True)
+	test_run = db.Column(db.String(30), db.ForeignKey('tests.test_run_name'), index = True)
+	machine_name = db.Column(db.String(30), index = True)
 	passed = db.Column(db.Boolean)
 	execution_time = db.Column(db.Float, index = True)
 	timestamp = db.Column(db.DateTime, default = db.func.now())
 	metrics = db.Column(JSON, index = False)
 	commit_id = db.Column(db.String(30), index = True)
 
-	def __init__(self, test_name, execution_time, metrics, passed, commit_id):
+	def __init__(self, test_name, test_run, machine_name, execution_time, metrics, passed, commit_id):
 		self.test_name = test_name
+		self.test_run = test_run
+		self.machine_name = machine_name
 		self.execution_time = execution_time		
 		self.metrics = metrics
 		self.passed = passed
@@ -58,6 +65,8 @@ class Test_Runs(db.Model):
 
 	def __repr__(self):
 		t = {"test_name": self.test_name,
+				"test_run": self.test_run,
+				"machine_name": self.machine_name,
                 "passed": self.passed,
                 "execution_time": self.execution_time, 
                 "metrics": self.metrics,                 

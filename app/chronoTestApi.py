@@ -2,6 +2,7 @@ from flask import jsonify, make_response, abort, request, g
 from flask.ext.restful import Resource, reqparse, fields, marshal
 from app import app, api
 from app import db, models, hm
+from sqlalchemy import and_
 from flask.ext.httpauth import HTTPBasicAuth
 import json
 
@@ -84,7 +85,11 @@ class TestListAPI(Resource):
 
         return json.loads(str(tests))
 
-    #Create New 
+    '''
+    Create New test_run entry for every test. If this is the first time a test
+    will be run, then a new test entry + a test_run entry will be added to the
+    database.
+    '''
     def post(self):
         
         args = self.reqparse.parse_args()
@@ -95,16 +100,22 @@ class TestListAPI(Resource):
 
         for t in tests:
             validateTest(t)
-            new_test = models.Test.query.filter(models.Test.name == t.get("name")).first()
+            test_name = t.get("name")
+            test_run_name = test_name + '_' + machine_name
+
+            new_test = models.Test.query.filter(models.Test.test_run_name == test_run_name).first()
 
             if(new_test == None):
-                new_test = models.Test(name = t.get("name"),
+                new_test = models.Test(name = test_name,
                                        machine_name = machine_name,
+                                       test_run_name = test_run_name,
                                        project_name = t.get("project_name"))
                 db.session.add(new_test)
                 db.session.commit()
 
-            new_test_run = models.Test_Runs(test_name = t.get("name"),
+            new_test_run = models.Test_Runs(test_name = test_name,
+                                            machine_name = machine_name,
+                                            test_run = test_run_name,
                                             passed = t.get("passed"),
                                             execution_time = t.get("execution_time"),
                                             metrics = t.get("metrics"),
@@ -141,15 +152,22 @@ class TestAPI(Resource):
 
     def get(self, test_name):
 
-        t = models.Test.query.filter(models.Test.name == test_name).first()
-
-        #Abort if there is no test with that name.
+        t = models.Test.query.filter(models.Test.name == test_name).all()
         if(t == None):
+            #Abort if there is no test with that name.
             abort(404)
 
-        return json.loads(str(t.runs))
+        #runs = models.Test_Runs.query.filter(models.Test_Runs.test_name == test_name).order_by(models.Test_Runs.test_run_name).all()
+        tests = {"name": test_name, "run_names": []}
+        for i in range(0,len(t)):
+            tests["run_names"].append(t[i].test_run_name)
+            tests[t[i].test_run_name] = json.loads(str(t[i].runs))
+
+        return tests
         
 api.add_resource(TestAPI, '/chrono_test/api/tests/<string:test_name>', endpoint = 'test')
+
+
 
 @auth.error_handler
 def unauthorized():
