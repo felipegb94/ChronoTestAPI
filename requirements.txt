@@ -1,3 +1,8 @@
+Setup a virtual environment for python and install the following:
+
+To make sure they are installed only for your virtual environment use the 
+command flask/bin/pip install NAME OF PACKAGE
+
 psycopg2
 flask
 flask-login
@@ -10,9 +15,11 @@ flask-wtf
 flask-babel
 flask-script
 flask-migrate
+flask-hmac
 guess_language
 flipflop
 coverage
+gunicorn
 
 
 flask-restful
