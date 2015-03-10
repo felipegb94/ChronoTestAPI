@@ -111,3 +111,95 @@ class User(db.Model):
 	def __repr__(self):
 		return '<User %r>' % (self.username)
 
+
+
+class t_Tests(db.Model):
+	__tablename__ = 't_tests'
+
+	id = db.Column(db.Integer, primary_key = True)
+	timestamp = db.Column(db.DateTime, default = db.func.now())
+	name = db.Column(db.String(30), index = True, primary_key = True, unique = True)
+	project_name = db.Column(db.String(20), index = True)
+
+	#Children elements
+	build_config = db.relationship('t_build_slaves', backref = 't_tests')
+
+	def __init__(self, name, project_name):
+		self.name = name
+		self.project_name = project_name
+
+	def __repr__(self):
+		test = {"name": self.name,
+                "project_name": self.project_name,  
+                "id": self.id,
+                "date_created": self.timestamp}
+
+		return json.dumps(test, indent = 4)
+
+'''
+t_Build_Slaves is an association table from t_Tests to t_Test_Runs.
+'''
+
+class t_Build_Slaves(db.Model):
+
+	__tablename__ = 't_build_slaves'
+
+	id = db.Column(db.Integer, primary_key = True)
+	slave = db.Column(db.String(30), index = True)
+	builder = db.Column(db.String(30), index = True)
+	test_name = db.Column(db.String(30), db.ForeignKey('t_tests.name'), index = True)
+	builder_id = db.Column(db.String(30), index = True, primary_key = True, unique = True)
+
+	#Child Elements
+	test_runs = db.relationship('t_test_runs', backref = 'tests')
+
+	def __init__(self, slave, test_name, builder):
+		self.slave = slave
+		self.builder = builder
+		self.name_left = test_name
+		self.builder_id = test_name + '_' + builder
+
+	def __repr__(self):
+		build_slave = {"slave": self.slave,
+                	   "builder": self.builder,  
+                	   "test_name": self.test_name,  
+                	   "builder_id": self.builder_id,  
+                       "id": self.id}
+
+		return json.dumps(build_slave, indent = 4)
+
+
+class t_Test_Runs(db.Model):
+
+	__tablename__ = "t_test_runs"
+
+	id = db.Column(db.Integer, primary_key = True)
+	name = db.Column(db.String(30), index = True)
+	test_builder = db.Column(db.String(30), db.ForeignKey('t_build_slaves.builder_id'), index = True)
+	timestamp = db.Column(db.DateTime, default = db.func.now())
+	commit_id = db.Column(db.String(40), index = True)
+	metrics = db.Column(JSON, index = False)
+	passed = db.Column(db.Boolean)
+	execution_time = db.Column(db.Float, index = True)
+
+
+	def __init__(self, name, testName_builderName, timestamp, commit_id, metrics, passed):
+		self.name = name
+		self.test_builder = testName_builderName
+		self.timestamp = timestamp
+		self.commit_id = commit_id		
+		self.metrics = metrics
+		self.passed = passed
+
+
+	def __repr__(self):
+		t = {"name": self.name,
+			 "test_builder": self.test_builder,
+			 "timestamp": self.timestamp,
+             "passed": self.passed,
+             "commit_id": self.commit_id, 
+             "metrics": self.metrics,                 
+             "timestamp": str(self.timestamp),
+             "id": self.id}
+
+		return json.dumps(t, indent = 4)
