@@ -81,7 +81,7 @@ class TestListAPI(Resource):
 
     def get(self):
 
-        tests = models.Test.query.all()
+        tests = models.t_Tests.query.all()
 
         return json.loads(str(tests))
 
@@ -93,33 +93,47 @@ class TestListAPI(Resource):
     def post(self):
         
         args = self.reqparse.parse_args()
+        # List of tests
         tests = args.get("tests")
+        # Configuration information
         config = args.get("config")
-        machine_name = config.get("build_info").get("hostname")
+
+        # Build information
+        hostname = config.get("build_info").get("hostname")
+        builder = config.get("build_info").get("builder")
+        # Repository data
         latest_commit = config.get("repos_data").get("commitID")
 
         for t in tests:
             validateTest(t)
             test_name = t.get("name")
-            test_run_name = test_name + '_' + machine_name
+            test_name_builder = test_name + '_' + builder
 
-            new_test = models.Test.query.filter(models.Test.test_run_name == test_run_name).first()
+            test = models.t_Tests.query.filter(models.t_Tests.name == test_name).first()
 
-            if(new_test == None):
-                new_test = models.Test(name = test_name,
-                                       machine_name = machine_name,
-                                       test_run_name = test_run_name,
-                                       project_name = t.get("project_name"))
-                db.session.add(new_test)
+            # if test does not exist in db. Add the test to the Test table
+            if(test == None):
+                test = models.t_Tests(name = test_name,
+                                      project_name = t.get("project_name"))
+                db.session.add(test)
                 db.session.commit()
 
-            new_test_run = models.Test_Runs(test_name = test_name,
-                                            machine_name = machine_name,
-                                            test_run = test_run_name,
-                                            passed = t.get("passed"),
-                                            execution_time = t.get("execution_time"),
-                                            metrics = t.get("metrics"),
-                                            commit_id = latest_commit) 
+            build_config = models.t_Build_Configs.query.filter(models.t_Build_Configs.builder_id == test_name_builder).first()
+            # If the test with that specific build config does not exist in the table, add a new build config row
+            if(build_config == None):
+                build_config = models.t_Build_Configs(test_name = test_name,
+                                                      hostname = hostname,
+                                                      builder = builder,
+                                                      builder_id = test_name_builder)
+                db.session.add(build_config)
+                db.session.commit()
+            # Add a new test_run row in the test_runs table
+            new_test_run = models.t_Test_Runs(test_name_builder = test_name_builder,
+                                              commit_id = latest_commit,
+                                              passed = t.get("passed"),
+                                              execution_time = t.get("execution_time"),
+                                              metrics = t.get("metrics"))
+
             db.session.add(new_test_run)
             db.session.commit() 
             
@@ -152,16 +166,17 @@ class TestAPI(Resource):
 
     def get(self, test_name):
 
-        t = models.Test.query.filter(models.Test.name == test_name).all()
+        t = models.t_Tests.query.filter(models.t_Tests.name == test_name).first()
         if(t == None):
             #Abort if there is no test with that name.
             abort(404)
 
         #runs = models.Test_Runs.query.filter(models.Test_Runs.test_name == test_name).order_by(models.Test_Runs.test_run_name).all()
+        build_configs = t.build_configs
         tests = {"name": test_name, "run_names": []}
-        for i in range(0,len(t)):
-            tests["run_names"].append(t[i].test_run_name)
-            tests[t[i].test_run_name] = json.loads(str(t[i].runs))
+        for i in range(0,len(build_configs)):
+            tests["run_names"].append(build_configs[i].builder_id)
+            tests[build_configs[i].builder_id] = json.loads(str(build_configs[i].test_runs))
 
         return tests
         
