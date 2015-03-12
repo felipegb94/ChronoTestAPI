@@ -1,8 +1,8 @@
 from flask import jsonify, make_response, abort, request, g
-from flask.ext.restful import Resource, reqparse, fields, marshal
+from flask.ext.restful import Resource, reqparse
 from app import app, api
-from app import db, models, hm
-from sqlalchemy import and_
+from app import db, models
+from sqlalchemy import and_, or_
 from flask.ext.httpauth import HTTPBasicAuth
 import json
 
@@ -36,39 +36,18 @@ def get_auth_token():
     return jsonify({ 'token': token.decode('ascii') })
 
 '''
-These are the keys every test should have.
-'''
-def Keys():
-    keys = ["name", "project_name", "metrics", "execution_time", "passed"]
-
-    return keys
-
-'''
-Validate that each test in the json file contains the required keys.
-'''
-def validateTest(data):
-
-    keys = Keys()
-
-    for key in keys:
-        if(not key in data):
-            message = "Missing " + key + " argument provided. Required to create a test"
-            abort(400)
-
-    return True
-
-'''
 Resource to query all tests in the Test table through get and to
 add a new set of test_runs through post. 
 '''
 class TestListAPI(Resource):
     decorators = [auth.login_required]
 
+    # Initializes args.
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.testParser = reqparse.RequestParser()
 
-        #Required format for input
+        # Required format for input
         self.reqparse.add_argument('tests', type = list, required = True,
             help = 'No test list provided. Required to create a test',             
             location = 'json')
@@ -79,6 +58,10 @@ class TestListAPI(Resource):
       
         super(TestListAPI, self).__init__()
 
+    '''
+    Get all tests in the t_tests table. This won't return any build or test_runs
+    information
+    '''
     def get(self):
 
         tests = models.t_Tests.query.all()
@@ -95,23 +78,25 @@ class TestListAPI(Resource):
         args = self.reqparse.parse_args()
         # List of tests
         tests = args.get("tests")
-        # Configuration information
+        # Dict with configuration information
         config = args.get("config")
 
         # Build information
         hostname = config.get("build_info").get("hostname")
         builder = config.get("build_info").get("builder")
+
         # Repository data
         latest_commit = config.get("repos_data").get("commitID")
 
         for t in tests:
-            validateTest(t)
-            test_name = t.get("name")
-            test_name_builder = test_name + '_' + builder
 
+            test_name = t.get("name") # Get test name
+            test_name_builder = test_name + '_' + builder # Create test_builder unique ID
+
+            # Query db for a test with the name tets_name
             test = models.t_Tests.query.filter(models.t_Tests.name == test_name).first()
 
-            # if test does not exist in db. Add the test to the Test table
+            # If test does not exist in db. Add the test to the Test table
             if(test == None):
                 test = models.t_Tests(name = test_name,
                                       project_name = t.get("project_name"))
@@ -136,7 +121,7 @@ class TestListAPI(Resource):
             
         numTests = models.t_Tests.query.all()
         db.session.add(new_test_run)
-        db.session.commit() 
+        db.session.commit() # Push all new entries to database
 
 
         return {"numTests" : len(numTests)}, 201
@@ -173,6 +158,8 @@ class TestAPI(Resource):
 
         #runs = models.Test_Runs.query.filter(models.Test_Runs.test_name == test_name).order_by(models.Test_Runs.test_run_name).all()
         build_configs = t.build_configs
+
+        # Format of the return json
         tests = {"name": test_name, "run_names": [], "status": [], "latest_commits": [], "current_execution_times": []}
 
         for i in range(0,len(build_configs)):
@@ -196,8 +183,9 @@ class TestAPI(Resource):
         
 api.add_resource(TestAPI, '/chrono_test/api/tests/<string:test_name>', endpoint = 'test')
 
-
-
+'''
+Returns an error when a login fails
+'''
 @auth.error_handler
 def unauthorized():
     return make_response(jsonify({'error 401': 'Unauthorized access. Your username or password are incorrect.'}), 401)

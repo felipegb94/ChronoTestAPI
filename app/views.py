@@ -8,14 +8,8 @@ from app import app
 @app.route('/')
 @app.route('/index')
 def index():
-    title = 'Testing Infrastructure for Project Chrono'
-    user = {'nickname': 'Felipe'}  # fake user
-    tests = {
-    			'test1': {'name':'test1' , 'runtime': 2},
-    			'test2': {'name': 'test2', 'runtime': 3}
-    		}
+    title = 'Testing Infrastructure API for Project Chrono'
+
     return render_template('index.html',
-                           title=title,
-                           user=user,
-                           tests = tests)
+                           title=title)
 

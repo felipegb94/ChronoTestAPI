@@ -12,7 +12,6 @@ relationship as of now is a one to many relation from Test to Test_Runs. There
 is a single test that is run many times.
 '''
 
-
 class User(db.Model):
 	__tablename__ = 'Users'
 	id = db.Column(db.Integer, primary_key=True)
@@ -49,7 +48,10 @@ class User(db.Model):
 		return '<User %r>' % (self.username)
 
 
-
+'''
+Table for Tests. Each test name is unique and is the primary_key.
+Parent of build_configs table (One-Many relation)
+'''
 class t_Tests(db.Model):
 	__tablename__ = 't_tests'
 
@@ -58,7 +60,7 @@ class t_Tests(db.Model):
 	name = db.Column(db.String(50), index = True, primary_key = True, unique = True)
 	project_name = db.Column(db.String(50), index = True)
 
-	#Children elements
+	# Children elements
 	build_configs = db.relationship('t_Build_Configs', backref = 't_tests')
 
 	def __init__(self, name, project_name):
@@ -74,9 +76,10 @@ class t_Tests(db.Model):
 		return json.dumps(test, indent = 4)
 
 '''
-t_Build_Slaves is an association table from t_Tests to t_Test_Runs.
+Table for all Build_Configs each test from the t_tests table is run on. A test can have 
+one to n number of configs it is run on. Each config is a row in this table.
+Parent of: t_test_runs (One-Many relation)
 '''
-
 class t_Build_Configs(db.Model):
 
 	__tablename__ = 't_build_configs'
@@ -105,19 +108,23 @@ class t_Build_Configs(db.Model):
 
 		return json.dumps(build_config, indent = 4)
 
-
+'''
+Table with all the test_runs for all build configs of a test. A test which
+is run under a certain config will have many runs and each run is a row in this
+table.
+'''
 class t_Test_Runs(db.Model):
 
 	__tablename__ = "t_test_runs"
 
 	id = db.Column(db.Integer, primary_key = True)
-	name = db.Column(db.String(120), index = True, unique = True)
-	test_name_builder = db.Column(db.String(100), db.ForeignKey('t_build_configs.builder_id'), index = True)
-	timestamp = db.Column(db.DateTime, default = db.func.now())
-	commit_id = db.Column(db.String(40), index = True)
-	metrics = db.Column(JSON, index = False)
-	passed = db.Column(db.Boolean)
-	execution_time = db.Column(db.Float, index = True)
+	name = db.Column(db.String(120), index = True, unique = True) # Unique name
+	test_name_builder = db.Column(db.String(100), db.ForeignKey('t_build_configs.builder_id'), index = True) 
+	timestamp = db.Column(db.DateTime, default = db.func.now()) # When did it run.
+	commit_id = db.Column(db.String(40), index = True) # Git commit id
+	metrics = db.Column(JSON, index = False) # Metrics recorded during test.
+	passed = db.Column(db.Boolean) # Test passed? 
+	execution_time = db.Column(db.Float, index = True) # How long did the test run?
 
 
 	def __init__(self, test_name_builder, commit_id, metrics, execution_time, passed):

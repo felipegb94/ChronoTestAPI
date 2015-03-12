@@ -2,12 +2,8 @@
 {% block content %}
 
   	{%if user%}
-      <h1>Hello, {{ user.nickname }}!</h1>
+      <h1>{{title}}</h1>
     {%else%}
-      <h1>Hello</h1>
     {% endif %}
-
-    {% for test in tests %}
-    <div><p>{{ test.name }} runtime = <b>{{ test.runtime }}</b></p></div>
-    {% endfor %}     
+  
 {% endblock %}
