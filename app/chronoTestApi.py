@@ -116,7 +116,6 @@ class TestListAPI(Resource):
                 test = models.t_Tests(name = test_name,
                                       project_name = t.get("project_name"))
                 db.session.add(test)
-                db.session.commit()
 
             build_config = models.t_Build_Configs.query.filter(models.t_Build_Configs.builder_id == test_name_builder).first()
             # If the test with that specific build config does not exist in the table, add a new build config row
@@ -126,7 +125,6 @@ class TestListAPI(Resource):
                                                       builder = builder,
                                                       builder_id = test_name_builder)
                 db.session.add(build_config)
-                db.session.commit()
             # Add a new test_run row in the test_runs table
             new_test_run = models.t_Test_Runs(test_name_builder = test_name_builder,
                                               commit_id = latest_commit,
@@ -134,10 +132,12 @@ class TestListAPI(Resource):
                                               execution_time = t.get("execution_time"),
                                               metrics = t.get("metrics"))
 
-            db.session.add(new_test_run)
-            db.session.commit() 
+
             
-        numTests = models.Test.query.all()
+        numTests = models.t_Tests.query.all()
+        db.session.add(new_test_run)
+        db.session.commit() 
+
 
         return {"numTests" : len(numTests)}, 201
 
@@ -173,10 +173,24 @@ class TestAPI(Resource):
 
         #runs = models.Test_Runs.query.filter(models.Test_Runs.test_name == test_name).order_by(models.Test_Runs.test_run_name).all()
         build_configs = t.build_configs
-        tests = {"name": test_name, "run_names": []}
+        tests = {"name": test_name, "run_names": [], "status": [], "latest_commits": [], "current_execution_times": []}
+
         for i in range(0,len(build_configs)):
+
             tests["run_names"].append(build_configs[i].builder_id)
-            tests[build_configs[i].builder_id] = json.loads(str(build_configs[i].test_runs))
+
+            t_runs = build_configs[i].test_runs
+            latest_run = t_runs[len(t_runs)-1]
+            status = latest_run.passed
+            latest_commit = latest_run.commit_id
+            current_execution_time = latest_run.execution_time
+
+            tests["latest_commits"].append(latest_commit)
+            tests["status"].append(status)
+            tests["current_execution_times"].append(current_execution_time)
+
+            tests[build_configs[i].builder_id] = json.loads(str(t_runs))
+
 
         return tests
         

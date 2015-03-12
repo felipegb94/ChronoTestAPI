@@ -88,7 +88,7 @@ class t_Build_Configs(db.Model):
 	test_name = db.Column(db.String(50), db.ForeignKey('t_tests.name'), index = True)
 
 	#Child Elements
-	test_runs = db.relationship('t_Test_Runs', backref = 't_tests')
+	test_runs = db.relationship('t_Test_Runs', backref = 't_tests', order_by = "t_Test_Runs.timestamp")
 
 	def __init__(self, hostname, test_name, builder, builder_id):
 		self.hostname = hostname
