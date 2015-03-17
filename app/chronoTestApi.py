@@ -87,6 +87,7 @@ class TestListAPI(Resource):
 
         # Repository data
         latest_commit = config.get("repos_data").get("commitID")
+        counter = 0
 
         for t in tests:
 
@@ -116,15 +117,15 @@ class TestListAPI(Resource):
                                               passed = t.get("passed"),
                                               execution_time = t.get("execution_time"),
                                               metrics = t.get("metrics"))
+            counter = counter+1
+            db.session.add(new_test_run)
 
 
-            
-        numTests = models.t_Tests.query.all()
-        db.session.add(new_test_run)
+        
         db.session.commit() # Push all new entries to database
 
 
-        return {"numTests" : len(numTests)}, 201
+        return {"numTestRunsAdded" : counter}, 201
 
 
         
