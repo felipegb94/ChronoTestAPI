@@ -30,4 +30,8 @@ python migrate.py db migrate
 python migrate.py db upgrade
 ```
 
-Authentication in this API is a password based authentication. Your database will have a Users table and it should have a 
+Authentication in this API is a password based authentication. Your database will have a Users table where it will save username and a passwordHash. Therefore the first thing you have to do before people start using the API, is to add users to your database. In order to do this open the create_user.py script and edit the following line with the correct credentials:
+```
+newUser = models.User("newUsername", "samplePassword")
+```
+After adding all the users that will be using your API now they can start making requests to it.
