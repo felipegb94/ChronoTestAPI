@@ -168,14 +168,20 @@ class TestAPI(Resource):
             tests["run_names"].append(build_configs[i].builder_id)
 
             t_runs = build_configs[i].test_runs
-            latest_run = t_runs[len(t_runs)-1]
-            status = latest_run.passed
-            latest_commit = latest_run.commit_id
-            current_execution_time = latest_run.execution_time
+            if(len(t_runs) == 0):
+                tests["latest_commits"].append("No latest commit")
+                tests["status"].append("No runs")
+                tests["current_execution_times"].append("No execution times")
 
-            tests["latest_commits"].append(latest_commit)
-            tests["status"].append(status)
-            tests["current_execution_times"].append(current_execution_time)
+            else:
+                latest_run = t_runs[len(t_runs)-1]
+                status = latest_run.passed
+                latest_commit = latest_run.commit_id
+                current_execution_time = latest_run.execution_time
+
+                tests["latest_commits"].append(latest_commit)
+                tests["status"].append(status)
+                tests["current_execution_times"].append(current_execution_time)               
 
             tests[build_configs[i].builder_id] = json.loads(str(t_runs))
 
