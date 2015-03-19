@@ -18,8 +18,9 @@ class User(db.Model):
 	username = db.Column(db.String(50), index=True, unique = True)
 	passwordHash = db.Column(db.String(200), unique = True)
 
-	def __init__(self, username):
+	def __init__(self, username, pw):
 		self.username = username
+		self.passwordHash = pwd_context.encrypt(pw)
 
 	def hash_password(self, pw):
 		self.passwordHash = pwd_context.encrypt(pw)
