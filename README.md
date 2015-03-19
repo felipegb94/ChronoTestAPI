@@ -21,6 +21,12 @@ Install the required packages
 pip install -r requirements.txt
 ```
 
+If you have not created a database yet continue to read this. If you have already created the database, skip this paragraph. In order to create a database make sure you have the postgresql server running. Once it is running just run the following command:
+```
+createdb NAME_OF_YOUR_DATABASE
+```
+In my case the name of the database in chronoTest.
+
 Open up `config_var_example.py` and change the `SQLALCHEMY_DATABASE_URI` to the URI of your postgresql database. In my case my database is `postgresql://localhost/chronoTest`. Also change the `SECRET_KEY` to what your secret key will be (this can be any randome phrase). Finally rename `config_var_example.py` to `config_var.py` 
 
 Run the following 3 commands:
