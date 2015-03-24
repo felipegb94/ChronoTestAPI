@@ -59,12 +59,12 @@ class TestListAPI(Resource):
         super(TestListAPI, self).__init__()
 
     '''
-    Get all tests in the t_tests table. This won't return any build or test_runs
+    Get all tests in the Tests table. This won't return any build or test_runs
     information
     '''
     def get(self):
 
-        tests = models.t_Tests.query.all()
+        tests = models.Tests.query.all()
 
         return json.loads(str(tests))
 
@@ -95,24 +95,24 @@ class TestListAPI(Resource):
             test_name_builder = test_name + '_' + builder # Create test_builder unique ID
 
             # Query db for a test with the name tets_name
-            test = models.t_Tests.query.filter(models.t_Tests.name == test_name).first()
+            test = models.Tests.query.filter(models.Tests.name == test_name).first()
 
             # If test does not exist in db. Add the test to the Test table
             if(test == None):
-                test = models.t_Tests(name = test_name,
+                test = models.Tests(name = test_name,
                                       project_name = t.get("project_name"))
                 db.session.add(test)
 
-            build_config = models.t_Build_Configs.query.filter(models.t_Build_Configs.builder_id == test_name_builder).first()
+            build_config = models.Build_Configs.query.filter(models.Build_Configs.builder_id == test_name_builder).first()
             # If the test with that specific build config does not exist in the table, add a new build config row
             if(build_config == None):
-                build_config = models.t_Build_Configs(test_name = test_name,
+                build_config = models.Build_Configs(test_name = test_name,
                                                       hostname = hostname,
                                                       builder = builder,
                                                       builder_id = test_name_builder)
                 db.session.add(build_config)
             # Add a new test_run row in the test_runs table
-            new_test_run = models.t_Test_Runs(test_name_builder = test_name_builder,
+            new_test_run = models.Test_Runs(test_name_builder = test_name_builder,
                                               commit_id = latest_commit,
                                               passed = t.get("passed"),
                                               execution_time = t.get("execution_time"),
@@ -152,7 +152,7 @@ class TestAPI(Resource):
 
     def get(self, test_name):
 
-        t = models.t_Tests.query.filter(models.t_Tests.name == test_name).first()
+        t = models.Tests.query.filter(models.Tests.name == test_name).first()
         if(t == None):
             #Abort if there is no test with that name.
             abort(404)

@@ -53,8 +53,8 @@ class User(db.Model):
 Table for Tests. Each test name is unique and is the primary_key.
 Parent of build_configs table (One-Many relation)
 '''
-class t_Tests(db.Model):
-	__tablename__ = 't_tests'
+class Tests(db.Model):
+	__tablename__ = 'tests'
 
 	id = db.Column(db.Integer, primary_key = True)
 	timestamp = db.Column(db.DateTime, default = db.func.now())
@@ -62,7 +62,7 @@ class t_Tests(db.Model):
 	project_name = db.Column(db.String(50), index = True)
 
 	# Children elements
-	build_configs = db.relationship('t_Build_Configs', backref = 't_tests')
+	build_configs = db.relationship('Build_Configs', backref = 'tests')
 
 	def __init__(self, name, project_name):
 		self.name = name
@@ -77,22 +77,22 @@ class t_Tests(db.Model):
 		return json.dumps(test, indent = 4)
 
 '''
-Table for all Build_Configs each test from the t_tests table is run on. A test can have 
+Table for all Build_Configs each test from the tests table is run on. A test can have 
 one to n number of configs it is run on. Each config is a row in this table.
 Parent of: t_test_runs (One-Many relation)
 '''
-class t_Build_Configs(db.Model):
+class Build_Configs(db.Model):
 
-	__tablename__ = 't_build_configs'
+	__tablename__ = 'build_configs'
 
 	id = db.Column(db.Integer, primary_key = True)
 	builder_id = db.Column(db.String(100), index = True, primary_key = True, unique = True)
 	hostname = db.Column(db.String(50), index = True)
 	builder = db.Column(db.String(50), index = True)
-	test_name = db.Column(db.String(50), db.ForeignKey('t_tests.name'), index = True)
+	test_name = db.Column(db.String(50), db.ForeignKey('tests.name'), index = True)
 
 	#Child Elements
-	test_runs = db.relationship('t_Test_Runs', backref = 't_tests', order_by = "t_Test_Runs.timestamp")
+	test_runs = db.relationship('Test_Runs', backref = 'tests', order_by = "Test_Runs.timestamp")
 
 	def __init__(self, hostname, test_name, builder, builder_id):
 		self.hostname = hostname
@@ -114,13 +114,13 @@ Table with all the test_runs for all build configs of a test. A test which
 is run under a certain config will have many runs and each run is a row in this
 table.
 '''
-class t_Test_Runs(db.Model):
+class Test_Runs(db.Model):
 
-	__tablename__ = "t_test_runs"
+	__tablename__ = "test_runs"
 
 	id = db.Column(db.Integer, primary_key = True)
 	name = db.Column(db.String(120), index = True, unique = True) # Unique name
-	test_name_builder = db.Column(db.String(100), db.ForeignKey('t_build_configs.builder_id'), index = True) 
+	test_name_builder = db.Column(db.String(100), db.ForeignKey('build_configs.builder_id'), index = True) 
 	timestamp = db.Column(db.DateTime, default = db.func.now()) # When did it run.
 	commit_id = db.Column(db.String(40), index = True) # Git commit id
 	metrics = db.Column(JSON, index = False) # Metrics recorded during test.
@@ -131,7 +131,7 @@ class t_Test_Runs(db.Model):
 	def __init__(self, test_name_builder, commit_id, metrics, execution_time, passed):
 
 		# Get count to get create a unique name for the test
-		count = t_Test_Runs.query.filter(t_Test_Runs.test_name_builder == test_name_builder).count()
+		count = Test_Runs.query.filter(Test_Runs.test_name_builder == test_name_builder).count()
 
 		self.name = test_name_builder + str(count)
 		self.test_name_builder = test_name_builder
