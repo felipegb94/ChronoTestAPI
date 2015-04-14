@@ -64,7 +64,7 @@ class TestListAPI(Resource):
     '''
     def get(self):
 
-        tests = models.Tests.query.all()
+        tests = models.Tests.query.order_by(models.Tests.project_name).all()
 
         return json.loads(str(tests))
 
